@@ -16,7 +16,7 @@ const TODO = "todo";
 var buildCounter = 1;
 var nodeCounter = 1;
 
-var expandedNodes = [];
+var expandedNodes = {};
 
 var isVisible = function( e )
 {
@@ -202,6 +202,7 @@ class TreeNodeProvider
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
 
         buildCounter = _context.workspaceState.get( 'buildCounter', 1 );
+        expandedNodes = _context.workspaceState.get( 'expandedNodes', [] );
     }
 
     getChildren( node )
@@ -466,6 +467,7 @@ class TreeNodeProvider
             if( shouldRemove && child.isWorkspaceNode !== true )
             {
                 delete expandedNodes[ child.fsPath ];
+                this._context.workspaceState.update( 'expandedNodes', expandedNodes );
             }
             return shouldRemove === false;
         }, this );
@@ -498,11 +500,13 @@ class TreeNodeProvider
     setExpanded( path, expanded )
     {
         expandedNodes[ path ] = expanded;
+        this._context.workspaceState.update( 'expandedNodes', expandedNodes );
     }
 
     clearExpansionState()
     {
         expandedNodes = {};
+        this._context.workspaceState.update( 'expandedNodes', expandedNodes );
     }
 }
 
