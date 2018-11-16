@@ -211,10 +211,15 @@
                     "default": "",
                     "markdownDescription": "Folder in which to run the search (defaults to the workspace folder)"
                 },
-                "todo-tree.globs": {
+                "todo-tree.includeGlobs": {
                     "type": "array",
                     "default": [],
-                    "markdownDescription": "Globs for use in limiting search results, e.g. `[\"!**/unit-tests\"]`"
+                    "markdownDescription": "Globs for use in limiting search results by inclusion, e.g. `[\"**/unit-tests/*.js\"]`"
+                },
+                "todo-tree.excludeGlobs": {
+                    "type": "array",
+                    "default": [],
+                    "markdownDescription": "Globs for use in limiting search results by exclusion (applied after **includeGlobs**), e.g. `[\"**/*.txt\"]`"
                 },
                 "todo-tree.ripgrep": {
                     "type": "string",

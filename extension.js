@@ -163,11 +163,6 @@ function activate( context )
             regex: "\"" + utils.getRegexSource() + "\"",
             rgPath: utils.getRgPath()
         };
-        var globs = config.globs;
-        if( globs && globs.length > 0 )
-        {
-            options.globs = globs;
-        }
         if( filename )
         {
             options.filename = filename;
@@ -217,6 +212,24 @@ function activate( context )
         } );
     }
 
+    function applyGlobs()
+    {
+        var includeGlobs = vscode.workspace.getConfiguration( 'todo-tree' ).get( 'includeGlobs' );
+        var excludeGlobs = vscode.workspace.getConfiguration( 'todo-tree' ).get( 'excludeGlobs' );
+
+        if( includeGlobs.length + excludeGlobs.length > 0 )
+        {
+            debug( "Applying globs to " + searchResults.length + " items..." );
+
+            searchResults = searchResults.filter( function( match )
+            {
+                return utils.isIncluded( match.file, includeGlobs, excludeGlobs );
+            } );
+
+            debug( "Remaining items: " + searchResults.length );
+        }
+    }
+
     function iterateSearchList()
     {
         if( searchList.length > 0 )
@@ -225,6 +238,7 @@ function activate( context )
             search( getOptions( entry ), ( searchList.length > 0 ) ? iterateSearchList : function()
             {
                 debug( "Found " + searchResults.length + " items" );
+                applyGlobs();
                 addResultsToTree();
                 setButtonsAndContext();
             } );
@@ -322,13 +336,21 @@ function activate( context )
         vscode.commands.executeCommand( 'setContext', 'todo-tree-has-content', empty === false );
     }
 
+    function isIncluded( filename )
+    {
+        var includeGlobs = vscode.workspace.getConfiguration( 'todo-tree' ).get( 'includeGlobs' );
+        var excludeGlobs = vscode.workspace.getConfiguration( 'todo-tree' ).get( 'excludeGlobs' );
+
+        return utils.isIncluded( filename, includeGlobs, excludeGlobs ) === true;
+    }
+
     function refreshFile( document )
     {
         var matchesFound = false;
 
         removeFileFromSearchResults( document.fileName );
 
-        if( utils.shouldIgnore( document.fileName ) === false )
+        if( isIncluded( document.fileName ) === true )
         {
             var text = document.getText();
             var regex = utils.getRegex();
@@ -473,6 +495,9 @@ function activate( context )
 
                 vscode.workspace.getConfiguration( 'todo-tree' ).update( 'customHighlight', customHighlight, true );
             }
+
+            // TODO Migrate globs
+            // globs -> excludeGlobs
         }
 
         function showInTree( uri )
@@ -499,7 +524,10 @@ function activate( context )
             {
                 if( document === editor.document )
                 {
-                    highlights.triggerHighlight( editor );
+                    if( document.fileName === undefined || isIncluded( document.fileName ) )
+                    {
+                        highlights.triggerHighlight( editor );
+                    }
                 }
             } );
         }
@@ -639,7 +667,8 @@ function activate( context )
                     resetOutputChannel();
                 }
 
-                if( e.affectsConfiguration( "todo-tree.globs" ) ||
+                if( e.affectsConfiguration( "todo-tree.includeGlobs" ) ||
+                    e.affectsConfiguration( "todo-tree.excludeGlobs" ) ||
                     e.affectsConfiguration( "todo-tree.regex" ) ||
                     e.affectsConfiguration( "todo-tree.ripgrep" ) ||
                     e.affectsConfiguration( "todo-tree.ripgrepArgs" ) ||
