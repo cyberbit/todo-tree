@@ -16,6 +16,9 @@ const TODO = "todo";
 var buildCounter = 1;
 var nodeCounter = 1;
 
+var totalCount = 0;
+var tagCounts = {};
+
 var expandedNodes = {};
 
 var isVisible = function( e )
@@ -133,6 +136,13 @@ function createTodoNode( result )
     var id = ( buildCounter * 1000000 ) + nodeCounter++;
     var label = utils.removeBlockComments( result.match.substr( result.column - 1 ), result.file );
     var extracted = utils.extractTag( label );
+
+    totalCount++;
+    if( tagCounts[ extracted.tag ] === undefined )
+    {
+        tagCounts[ extracted.tag ] = 0;
+    }
+    tagCounts[ extracted.tag ]++;
 
     return {
         type: TODO,
@@ -367,6 +377,9 @@ class TreeNodeProvider
 
     clear( folders )
     {
+        totalCount = 0;
+        tagCounts = {};
+
         nodes = [];
 
         workspaceFolders = folders;
@@ -648,6 +661,16 @@ class TreeNodeProvider
     {
         expandedNodes = {};
         this._context.workspaceState.update( 'expandedNodes', expandedNodes );
+    }
+
+    getTotal()
+    {
+        return totalCount;
+    }
+
+    getTagCounts()
+    {
+        return tagCounts;
     }
 }
 

@@ -102,11 +102,45 @@ function activate( context )
 
         if( interrupted === false )
         {
-            status.hide();
+            updateStatusBar();
         }
 
         provider.filter( currentFilter );
         refreshTree();
+    }
+
+    function updateStatusBar()
+    {
+        if( vscode.workspace.getConfiguration( 'todo-tree' ).statusBar === 'total' )
+        {
+            status.text = "$(check):" + provider.getTotal();
+            status.tooltip = "Todo-Tree total";
+            status.show();
+        }
+        else if( vscode.workspace.getConfiguration( 'todo-tree' ).statusBar === 'tags' )
+        {
+            var text = "$(check) ";
+            var tagCounts = provider.getTagCounts();
+            Object.keys( tagCounts ).map( function( tag )
+            {
+                text += tag + ":" + tagCounts[ tag ] + " ";
+            } );
+            status.text = text;
+            status.tooltip = "Todo-Tree tags counts";
+            status.show();
+        }
+        else
+        {
+            status.hide();
+        }
+
+        status.command = "todo-tree.toggleStatusBar";
+    }
+
+    function toggleStatusBar()
+    {
+        var newSetting = vscode.workspace.getConfiguration( 'todo-tree' ).statusBar === 'total' ? "tags" : "total";
+        vscode.workspace.getConfiguration( 'todo-tree' ).update( 'statusBar', newSetting, true );
     }
 
     function removeFileFromSearchResults( filename )
@@ -676,6 +710,7 @@ function activate( context )
         context.subscriptions.push( vscode.commands.registerCommand( 'todo-tree.ungroupByTag', ungroupByTag ) );
         context.subscriptions.push( vscode.commands.registerCommand( 'todo-tree.addTag', addTag ) );
         context.subscriptions.push( vscode.commands.registerCommand( 'todo-tree.removeTag', removeTag ) );
+        context.subscriptions.push( vscode.commands.registerCommand( 'todo-tree.toggleStatusBar', toggleStatusBar ) );
 
         context.subscriptions.push( vscode.window.onDidChangeActiveTextEditor( function( e )
         {
