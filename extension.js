@@ -15,6 +15,7 @@ var currentFilter;
 var interrupted = false;
 var selectedDocument;
 var refreshTimeout;
+var openDocuments = {};
 
 function activate( context )
 {
@@ -242,21 +243,9 @@ function activate( context )
 
     function refreshOpenFiles()
     {
-        var editors = vscode.window.visibleTextEditors;
-        var documents = vscode.workspace.textDocuments;
-
-        documents.map( function( document )
+        Object.keys( openDocuments ).map( function( document )
         {
-            editors.map( function( editor )
-            {
-                if( editor.document === document )
-                {
-                    if( document.uri && document.uri.scheme === "file" )
-                    {
-                        refreshFile( document );
-                    }
-                }
-            } );
+            refreshFile( openDocuments[ document ] );
         } );
     }
 
@@ -716,6 +705,8 @@ function activate( context )
         {
             if( e && e.document )
             {
+                openDocuments[ e.document.fileName ] = e.document;
+
                 if( vscode.workspace.getConfiguration( 'todo-tree' ).autoRefresh === true )
                 {
                     if( e.document.uri && e.document.uri.scheme === "file" )
@@ -749,6 +740,7 @@ function activate( context )
             {
                 if( document.uri.scheme === "file" )
                 {
+                    openDocuments[ document.fileName ] = document;
                     refreshFile( document );
                 }
             }
@@ -756,6 +748,8 @@ function activate( context )
 
         context.subscriptions.push( vscode.workspace.onDidCloseTextDocument( document =>
         {
+            delete openDocuments[ document.fileName ];
+
             if( vscode.workspace.getConfiguration( 'todo-tree' ).autoRefresh === true )
             {
                 if( document.uri.scheme === "file" && vscode.workspace.getConfiguration( 'todo-tree' ).showTagsFromOpenFilesOnly === true )
@@ -833,6 +827,16 @@ function activate( context )
         migrateSettings();
         setButtonsAndContext();
         rebuild();
+
+        var editors = vscode.window.visibleTextEditors;
+        editors.map( function( editor )
+        {
+            if( editor.document && editor.document.uri.scheme === "file" )
+            {
+                openDocuments[ editor.document.fileName ] = editor.document;
+            }
+            refreshOpenFiles();
+        } );
 
         if( vscode.window.activeTextEditor )
         {
