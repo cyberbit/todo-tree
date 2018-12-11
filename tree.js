@@ -268,7 +268,7 @@ class TreeNodeProvider
             {
                 return node.nodes === undefined || ( node.nodes.length + node.todos.length > 0 );
             } );
-            var rootNodes = nodes.filter( isVisible );
+            var rootNodes = availableNodes.filter( isVisible );
             if( rootNodes.length > 0 )
             {
                 if( config.shouldGroup() )
@@ -621,7 +621,7 @@ class TreeNodeProvider
                 {
                     child.nodes = me.remove( filename, child.nodes );
                 }
-                var shouldRemove = ( child.nodes && child.todos && ( child.nodes.length + child.todos.length === 0 ) && ( child.isWorkspaceNode !== true ) );
+                var shouldRemove = ( child.nodes && child.todos && child.nodes.length + child.todos.length === 0 && child.isWorkspaceNode !== true );
                 if( shouldRemove )
                 {
                     delete expandedNodes[ child.fsPath ];
@@ -644,6 +644,7 @@ class TreeNodeProvider
         {
             nodes = children;
         }
+
         return children;
     }
 
