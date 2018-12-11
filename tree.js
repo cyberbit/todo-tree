@@ -137,13 +137,6 @@ function createTodoNode( result )
     var label = utils.removeBlockComments( result.match.substr( result.column - 1 ), result.file );
     var extracted = utils.extractTag( label );
 
-    totalCount++;
-    if( tagCounts[ extracted.tag ] === undefined )
-    {
-        tagCounts[ extracted.tag ] = 0;
-    }
-    tagCounts[ extracted.tag ]++;
-
     return {
         type: TODO,
         fsPath: result.file,
@@ -153,6 +146,16 @@ function createTodoNode( result )
         id: id,
         visible: true
     };
+}
+
+function countTags( tag )
+{
+    totalCount++;
+    if( tagCounts[ tag ] === undefined )
+    {
+        tagCounts[ tag ] = 0;
+    }
+    tagCounts[ tag ]++;
 }
 
 function locateWorkspaceNode( nodes, filename )
@@ -488,6 +491,7 @@ class TreeNodeProvider
                 else if( nodes.find( findTodoNode, todoNode ) === undefined )
                 {
                     nodes.push( todoNode );
+                    countTags( todoNode.tag );
                 }
             }
             else
@@ -495,6 +499,7 @@ class TreeNodeProvider
                 if( nodes.find( findTodoNode, todoNode ) === undefined )
                 {
                     nodes.push( todoNode );
+                    countTags( todoNode.tag );
                 }
             }
         }
@@ -526,6 +531,7 @@ class TreeNodeProvider
             {
                 todoNode.parent = childNode;
                 childNode.todos.push( todoNode );
+                countTags( todoNode.tag );
             }
         }
     }
@@ -591,6 +597,15 @@ class TreeNodeProvider
                 var shouldRemove = ( child.fsPath === filename );
                 if( shouldRemove )
                 {
+                    totalCount -= child.todos.length;
+                    child.todos.map( function( todoNode )
+                    {
+                        tagCounts[ todoNode.tag ]--;
+                        if( tagCounts[ todoNode.tag ] === 0 )
+                        {
+                            delete tagCounts[ todoNode.tag ];
+                        }
+                    } );
                     delete expandedNodes[ child.fsPath ];
                     me._context.workspaceState.update( 'expandedNodes', expandedNodes );
                 }
