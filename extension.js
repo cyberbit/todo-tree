@@ -114,9 +114,17 @@ function activate( context )
     {
         if( vscode.workspace.getConfiguration( 'todo-tree' ).statusBar === 'total' )
         {
-            status.text = "$(check):" + provider.getTotal();
+            var total = provider.getTotal();
+            status.text = "$(check):" + total;
             status.tooltip = "Todo-Tree total";
-            status.show();
+            if( total > 0 )
+            {
+                status.show();
+            }
+            else
+            {
+                status.hide();
+            }
         }
         else if( vscode.workspace.getConfiguration( 'todo-tree' ).statusBar === 'tags' )
         {
@@ -128,7 +136,14 @@ function activate( context )
             } );
             status.text = text;
             status.tooltip = "Todo-Tree tags counts";
-            status.show();
+            if( Object.keys( tagCounts ).length > 0 )
+            {
+                status.show();
+            }
+            else
+            {
+                status.hide();
+            }
         }
         else
         {
@@ -757,6 +772,7 @@ function activate( context )
                     removeFileFromSearchResults( document.fileName );
                     provider.remove( document.fileName );
                     refreshTree();
+                    updateStatusBar();
                 }
             }
         } ) );
